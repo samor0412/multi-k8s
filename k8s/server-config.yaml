@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-cluster-ip-service
+spec:
+  type: ClusterIP
+  selector:
+    component: server
+  ports:
+  - port: 5000
+    targetPort: 5000
+    
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service-deployment
+spec:
+  selector:
+    matchLabels:
+      component: server
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        component: server
+    spec:
+      containers:
+      - name: server
+        image: samor412/multi-server
+        ports:
+          - containerPort: 5000
+        env:
+          - name: REDIS_HOST
+            value: redis-cluster-ip-service
+          - name: REDIS_PORT
+            value: "6379"
+          - name: PG_USER
+            value: postgres
+          - name: PG_HOST
+            value: postgres-cluster-ip-service
+          - name: PGPORT
+            value: "5432"
+          - name: PGDATABASE
+            value: postgres
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: pgpassword
+                key: PGPASSWORD
